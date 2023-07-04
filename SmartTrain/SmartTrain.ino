@@ -3,16 +3,18 @@
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 
-
 #define WIFI_SSID "FIWARE"
 #define WIFI_PSK "!FIWARE!on!air!"
 
-Lpf2Hub myTrainHub;
 byte port = (byte)PoweredUpHubPort::A;
-
 int speed = 0;  // Placeholder temperature variable
+int state = 0;
+int position = 0;
 String color = "blue"; // Placeholder color variable
+int potValue = 0;
+
 AsyncWebServer server(80);
+Lpf2Hub myTrainHub;
 
 void setup()
 {
@@ -54,6 +56,7 @@ void connectToHub()
         Serial.println( "Failed to connect to HUB" );
       }
     }
+    delay(1000);
   }
 }
 
@@ -78,7 +81,7 @@ void setRoutes()
       String response = createJsonResponse("fail", "Missing argument");
       request->send(400, "application/json", response);
     }
-  });
+    });
 
     server.on("/c", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("value")) {
@@ -102,7 +105,17 @@ void setRoutes()
       String response = createJsonResponse("fail", "Missing argument");
       request->send(400, "application/json", response);
     }
-  });
+    });
+
+    server.on("/g", HTTP_GET, [](AsyncWebServerRequest *request){
+        String response = "position:" + String(position);
+        request->send(200, "application/json", response);
+    });
+
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        String response = "<html><body><a href=\"./s?value=00\">Speed = 0</a><br><a href=\"./s?value=40\">Speed = 40</a> </body></html>";
+        request->send(200, "text/html", response);
+    });
 
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", "Not found");
@@ -113,6 +126,31 @@ void setRoutes()
 
 void loop()
 {
+    potValue = analogRead(A0);
+    Serial.println(potValue);
+    if (state == 0 && potValue < 4000){
+        state = 1;
+        position++;
+        if (position == 1){
+            myTrainHub.setLedColor(PINK);
+        }
+        if (position == 1) myTrainHub.setLedColor(PINK);
+        else if (position == 2) myTrainHub.setLedColor(PURPLE);
+        else if (position == 3) myTrainHub.setLedColor(BLUE);
+        else if (position == 4) myTrainHub.setLedColor(LIGHTBLUE);
+        else if (position == 5) myTrainHub.setLedColor(CYAN);
+        else if (position == 6) myTrainHub.setLedColor(GREEN);
+        else if (position == 7) myTrainHub.setLedColor(YELLOW);
+        else if (position == 8) myTrainHub.setLedColor(ORANGE);
+        else if (position == 9) { 
+          myTrainHub.setLedColor(RED);
+          position = 0;
+        }
+        
+    }
+    else if (state == 1 && potValue >= 4000){
+        state = 0;
+    }
 }
 
 String createJsonResponse(const char* status, const char* message) {

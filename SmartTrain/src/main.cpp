@@ -7,9 +7,11 @@
 
 std::mutex serialMutex;
 
+// TODO: Change to FIWARE_fair
 const char* ssid = "FIWARE";
 const char* password = "!FIWARE!on!air!";
-const char* mqtt_server = "192.168.20.35";
+const char* mqtt_server = "192.168.20.35"; // TODO: Change to right IP Adress
+
 const char* mqtt_username = "LegoDemonstrator";
 const char* mqtt_password = "Lego12Demo34nstr56ator";
 const char* mqtt_client_id = "SmartTrain-ESP32";
@@ -77,7 +79,7 @@ void connectToWiFi() {
     Serial.println("");
     Serial.print("WiFi connected.");
     Serial.println(WiFi.localIP());
-    trainHub.setLedColor( GREEN );
+    trainHub.setLedColor( WHITE );
 }
 
 void connectToHub() {
@@ -94,6 +96,7 @@ void connectToHub() {
         }
         delay(1000);
     }
+    trainHub.setLedColor( BLUE );
 }
 
 void updateState() {
@@ -101,18 +104,6 @@ void updateState() {
     if (state == 0 && potValue < 4000) {
         state = 1;
         position++;
-        if (position == 1) trainHub.setLedColor(PINK);
-        else if (position == 2) trainHub.setLedColor(PURPLE);
-        else if (position == 3) trainHub.setLedColor(BLUE);
-        else if (position == 4) trainHub.setLedColor(LIGHTBLUE);
-        else if (position == 5) trainHub.setLedColor(CYAN);
-        else if (position == 6) trainHub.setLedColor(GREEN);
-        else if (position == 7) trainHub.setLedColor(YELLOW);
-        else if (position == 8) trainHub.setLedColor(ORANGE);
-        else if (position == 9) {
-            trainHub.setLedColor(RED);
-            position = 0;
-        }
     }
     else if (state == 1 && potValue >= 4000) {
         state = 0;
@@ -163,12 +154,14 @@ void connectMqtt(){
         if (!client.connected()) {
             reconnect();
         }
-            
+
+        trainHub.setLedColor( GREEN ); 
     }
 }
 
 void reconnect() {
     while (!client.connected()){
+        trainHub.setLedColor( RED );
         serialMutex.lock();
         Serial.println("Attempting MQTT connection...");
         if ( client.connect(mqtt_client_id, mqtt_username, mqtt_password) ) {
@@ -183,6 +176,7 @@ void reconnect() {
         }
         serialMutex.unlock();
     }
+    trainHub.setLedColor( GREEN );
 }
 
 void sendPosition() {

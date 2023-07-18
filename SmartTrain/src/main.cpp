@@ -29,7 +29,8 @@ unsigned int state = 0;
 unsigned int position = 0;
 int speed = 0;
 
-const unsigned long interval = 25000;
+// interval sets a throtling for updating the position
+const unsigned long interval = 800;
 unsigned long previousMillis = 0;
 
 void callback(char*, byte*, unsigned int);
@@ -66,7 +67,6 @@ void loop() {
     // put your main code here, to run repeatedly:
     if (!client.connected()) reconnect();
     updateState();
-    sendPosition();
     client.loop();
 }
 
@@ -103,7 +103,7 @@ void updateState() {
     int potValue = analogRead(A0);
     if (state == 0 && potValue < 4000) {
         state = 1;
-        position++;
+        sendPosition();
     }
     else if (state == 1 && potValue >= 4000) {
         state = 0;
@@ -182,6 +182,7 @@ void reconnect() {
 void sendPosition() {
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis >= interval){
+        position++;
         String payload = "";
         jsonDoc.clear();
         jsonDoc["position"] = position;
